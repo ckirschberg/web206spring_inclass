@@ -1,6 +1,6 @@
-import { http, HttpResponse } from "msw";
+import { http, HttpResponse, delay } from "msw";
 import { Product } from "../types/product";
-
+ 
 // In-memory "database" seeded with the dummy data
 let productStore: Product[] = [
     { id: 1, name: "Cat",      price: 10,  description: "Description 1", category: "Pet"    },
@@ -13,12 +13,14 @@ let nextId = 5;
 
 export const handlers = [
     // GET /api/products
-    http.get("/api/products", () => {
+    http.get("/api/products", async () => {
+        await delay(1000); // simulates 1s network latency
         return HttpResponse.json(productStore);
     }),
 
     // GET /api/products/:id
-    http.get("/api/products/:id", ({ params }) => {
+    http.get("/api/products/:id", async ({ params }) => {
+        await delay(1000); // simulates 1s network latency
         const product = productStore.find((p) => p.id === Number(params.id));
         if (!product) return new HttpResponse(null, { status: 404 });
         return HttpResponse.json(product);
@@ -26,6 +28,7 @@ export const handlers = [
 
     // POST /api/products
     http.post("/api/products", async ({ request }) => {
+        await delay(1000); // simulates 1s network latency
         const body = (await request.json()) as Omit<Product, "id">;
         const newProduct: Product = { id: nextId++, ...body };
         productStore.push(newProduct);
@@ -34,6 +37,7 @@ export const handlers = [
 
     // PUT /api/products/:id
     http.put("/api/products/:id", async ({ params, request }) => {
+        await delay(1000); // simulates 1s network latency
         const body = (await request.json()) as Partial<Product>;
         const index = productStore.findIndex((p) => p.id === Number(params.id));
         if (index === -1) return new HttpResponse(null, { status: 404 });
@@ -42,7 +46,8 @@ export const handlers = [
     }),
 
     // DELETE /api/products/:id
-    http.delete("/api/products/:id", ({ params }) => {
+    http.delete("/api/products/:id", async ({ params }) => {
+        await delay(1000); // simulates 1s network latency
         const index = productStore.findIndex((p) => p.id === Number(params.id));
         if (index === -1) return new HttpResponse(null, { status: 404 });
         productStore.splice(index, 1);

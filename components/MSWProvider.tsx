@@ -7,7 +7,7 @@ export function MSWProvider({ children }: { children: React.ReactNode }) {
 
     useEffect(() => {
         if (typeof window !== "undefined") {
-            import("../../mocks/browser").then(({ worker }) => {
+            import("../mocks/browser").then(({ worker }) => {
                 worker.start({ onUnhandledRequest: "bypass" }).then(() => setReady(true));
             });
         }
@@ -17,3 +17,4 @@ export function MSWProvider({ children }: { children: React.ReactNode }) {
 
     return <>{children}</>;
 }
+ 
