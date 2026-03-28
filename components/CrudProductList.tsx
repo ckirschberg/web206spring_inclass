@@ -14,6 +14,8 @@ export default function CrudProductList() {
     const [form, setForm] = useState<FormState>(empty);
     const [editingId, setEditingId] = useState<number | null>(null);
     const [submitting, setSubmitting] = useState(false);
+    // Separate error state for mutations so we can show rollback feedback
+    const [mutationError, setMutationError] = useState<string | null>(null);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -23,6 +25,7 @@ export default function CrudProductList() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setSubmitting(true);
+        setMutationError(null);
         try {
             if (editingId !== null) {
                 await updateProduct(editingId, form);
@@ -31,6 +34,9 @@ export default function CrudProductList() {
             }
             setForm(empty);
             setEditingId(null);
+        } catch (e) {
+            // Server failed — the hook already rolled back the optimistic change
+            setMutationError((e as Error).message);
         } finally {
             setSubmitting(false);
         }
@@ -48,7 +54,11 @@ export default function CrudProductList() {
 
     return (
         <div className="container">
-            <h1>Products (MSW CRUD demo)</h1>
+            <h1>Products (MSW CRUD demo — Optimistic UI)</h1>
+            <p style={{ color: "#6b7280", marginTop: 0 }}>
+                Changes appear <strong>instantly</strong> in the table — the UI updates before
+                the server responds. If the server fails, the change is automatically rolled back.
+            </p>
 
             {/* Form */}
             <form className="crud-form" onSubmit={handleSubmit}>
@@ -72,6 +82,11 @@ export default function CrudProductList() {
             {/* List */}
             {loading && <p>Loading…</p>}
             {error && <p style={{ color: "red" }}>Error: {error}</p>}
+            {mutationError && (
+                <p style={{ color: "#b45309", background: "#fef3c7", padding: "0.6rem 1rem", borderRadius: 8 }}>
+                    ⚠ Action failed (rolled back): {mutationError}
+                </p>
+            )}
 
             {!loading && (
                 <table className="crud-table">
@@ -90,7 +105,19 @@ export default function CrudProductList() {
                                 <td>{p.description}</td>
                                 <td className="crud-table__actions">
                                     <button onClick={() => startEdit(p)}>Edit</button>
-                                    <button onClick={() => deleteProduct(p.id)} className="danger">Delete</button>
+                                    <button
+                                        onClick={async () => {
+                                            setMutationError(null);
+                                            try {
+                                                await deleteProduct(p.id);
+                                            } catch (e) {
+                                                setMutationError((e as Error).message);
+                                            }
+                                        }}
+                                        className="danger"
+                                    >
+                                        Delete
+                                    </button>
                                 </td>
                             </tr>
                         ))}

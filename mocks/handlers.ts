@@ -13,9 +13,24 @@ let nextId = 5;
 
 export const handlers = [
     // GET /api/products
-    http.get("/api/products", async () => {
+    // Supports optional ?search= query parameter for server-side filtering.
+    // The server checks the query against name, category and price —
+    // exactly what a real backend search endpoint would do.
+    http.get("/api/products", async ({ request }) => {
         await delay(1000); // simulates 1s network latency
-        return HttpResponse.json(productStore);
+        const url = new URL(request.url);
+        const search = url.searchParams.get("search")?.toLowerCase() ?? "";
+
+        const results = search
+            ? productStore.filter(
+                  (p) =>
+                      p.name.toLowerCase().includes(search) ||
+                      p.category.toLowerCase().includes(search) ||
+                      p.price < Number(search)
+              )
+            : productStore;
+
+        return HttpResponse.json(results);
     }),
 
     // GET /api/products/:id
