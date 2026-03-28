@@ -9,7 +9,7 @@ type FormState = Omit<Product, "id">;
 const empty: FormState = { name: "", price: 0, description: "", category: "" };
 
 export default function CrudProductList() {
-    const { products, loading, error, createProduct, updateProduct, deleteProduct } = useProducts();
+    const { products, createProduct, updateProduct, deleteProduct } = useProducts();
 
     const [form, setForm] = useState<FormState>(empty);
     const [editingId, setEditingId] = useState<number | null>(null);
@@ -70,10 +70,6 @@ export default function CrudProductList() {
             </form>
 
             {/* List */}
-            {loading && <p>Loading…</p>}
-            {error && <p style={{ color: "red" }}>Error: {error}</p>}
-
-            {!loading && (
                 <table className="crud-table">
                     <thead>
                         <tr>
@@ -96,7 +92,5 @@ export default function CrudProductList() {
                         ))}
                     </tbody>
                 </table>
-            )}
         </div>
-    );
-}
+    )};

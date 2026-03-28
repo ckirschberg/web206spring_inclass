@@ -4,10 +4,8 @@ import { useCallback, useEffect, useState } from "react";
 import { Product } from "../../types/product";
 
 export function useProducts() {
-    const [products, setProducts] = useState<Product[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-
+    // We want to store the products here in a state variable
+    
     // READ — fetch all products
     //
     // useCallback prevents a new function from being created on every render.
@@ -17,21 +15,10 @@ export function useProducts() {
     // another fetch, another state update, another render — an infinite loop.
     // The empty array [] means the function is only created once (on mount).
     const fetchProducts = useCallback(async () => {
-        setLoading(true);
-        setError(null);
-        try {
-            // MSW intercepts this URL and returns the in-memory store.
-            // When the real backend is ready, replace "/api/products" with
-            // your actual API base URL, e.g. "https://api.example.com/products"
-            // or an environment variable like `${process.env.NEXT_PUBLIC_API_URL}/products`
-            const res = await fetch("/api/products");
-            if (!res.ok) throw new Error("Failed to fetch products");
-            setProducts(await res.json());
-        } catch (e) {
-            setError((e as Error).message);
-        } finally {
-            setLoading(false);
-        }
+        // MSW intercepts this URL and returns the in-memory store.
+        // When the real backend is ready, replace "/api/products" with
+        // your actual API base URL, e.g. "https://api.example.com/products"
+        // or an environment variable like `${process.env.NEXT_PUBLIC_API_URL}/products`
     }, []);
 
     // useEffect runs *after* the component mounts (appears on screen).
@@ -55,15 +42,7 @@ export function useProducts() {
         // MSW handles POST and returns the new product with an auto-generated id.
         // With a real backend this fetch call stays exactly the same —
         // just make sure the server also responds with the created product (201).
-        const res = await fetch("/api/products", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(data),
-        });
-        if (!res.ok) throw new Error("Failed to create product");
-        const created: Product = await res.json();
-        setProducts((prev) => [...prev, created]);
-        return created;
+        
     }, []);
 
     // UPDATE — same reasoning as createProduct above
@@ -71,15 +50,6 @@ export function useProducts() {
         // MSW handles PUT and merges the fields in the in-memory store.
         // Some REST APIs use PATCH instead of PUT for partial updates —
         // change method: "PUT" to method: "PATCH" if your backend requires it.
-        const res = await fetch(`/api/products/${id}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(data),
-        });
-        if (!res.ok) throw new Error("Failed to update product");
-        const updated: Product = await res.json();
-        setProducts((prev) => prev.map((p) => (p.id === id ? updated : p)));
-        return updated;
     }, []);
 
     // DELETE — same reasoning as createProduct above
@@ -88,11 +58,8 @@ export function useProducts() {
         // The real backend should also return 204 for this to work as-is.
         // If it returns 200 with a body instead, no changes are needed here
         // since we don't read the response body.
-        const res = await fetch(`/api/products/${id}`, { method: "DELETE" });
-        if (!res.ok) throw new Error("Failed to delete product");
-        setProducts((prev) => prev.filter((p) => p.id !== id));
     }, []);
 
-    return { products, loading, error, createProduct, updateProduct, deleteProduct };
+    return { }
 }
 
