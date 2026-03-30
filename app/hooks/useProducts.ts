@@ -16,10 +16,11 @@ export function useProducts() {
     // another fetch, another state update, another render — an infinite loop.
     // The empty array [] means the function is only created once (on mount).
     const fetchProducts = useCallback(async () => {
-        const response = fetch(baseUrl+"/api/products", {
+        const response = await fetch(baseUrl+"/api/products", {
             method: 'GET'
         })
-        console.log(response);
+        //console.log(response);
+        setProducts(await response.json())
         // MSW intercepts this URL and returns the in-memory store.
         // When the real backend is ready, replace "/api/products" with
         // your actual API base URL, e.g. "https://api.example.com/products"
@@ -47,7 +48,17 @@ export function useProducts() {
         // MSW handles POST and returns the new product with an auto-generated id.
         // With a real backend this fetch call stays exactly the same —
         // just make sure the server also responds with the created product (201).
-        
+        const response = await fetch(baseUrl+"/api/products", {
+            method: 'POST',
+            // headers: {
+            //     'Content-Type': 'application/json'
+            // },
+            body: JSON.stringify(data)
+        })
+        const product = await response.json()
+        //console.log(product)
+        setProducts(products => [...products, product])
+
     }, []);
 
     // UPDATE — same reasoning as createProduct above
@@ -65,6 +76,6 @@ export function useProducts() {
         // since we don't read the response body.
     }, []);
 
-    return { products }
+    return { products, createProduct, updateProduct, deleteProduct };
 }
 

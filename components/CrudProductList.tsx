@@ -9,7 +9,7 @@ type FormState = Omit<Product, "id">;
 const empty: FormState = { name: "", price: 0, description: "", category: "" };
 
 export default function CrudProductList() {
-    const { products } = useProducts();
+    const { products, createProduct, updateProduct, deleteProduct } = useProducts();
 
     const [form, setForm] = useState<FormState>(empty);
     const [editingId, setEditingId] = useState<number | null>(null);
