@@ -48,9 +48,14 @@ export const handlers = [
     // DELETE /api/products/:id
     http.delete("/api/products/:id", async ({ params }) => {
         await delay(1000); // simulates 1s network latency
-        const index = productStore.findIndex((p) => p.id === Number(params.id));
-        if (index === -1) return new HttpResponse(null, { status: 404 });
-        productStore.splice(index, 1);
-        return new HttpResponse(null, { status: 204 });
+        if (Math.random() < 0.5) {
+            const index = productStore.findIndex((p) => p.id === Number(params.id));
+            if (index === -1) return new HttpResponse(null, { status: 404 });
+            productStore.splice(index, 1);
+            return new HttpResponse(null, { status: 204 });
+        }
+        else {
+            return HttpResponse.json({error: "Something went wrong, muahhahaahh"}, { status: 500 });
+        }
     }),
 ];

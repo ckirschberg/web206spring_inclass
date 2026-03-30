@@ -9,7 +9,7 @@ type FormState = Omit<Product, "id">;
 const empty: FormState = { name: "", price: 0, description: "", category: "" };
 
 export default function CrudProductList() {
-    const { products, createProduct, updateProduct, deleteProduct } = useProducts();
+    const { products, createProduct, updateProduct, deleteProduct, isLoading, error } = useProducts();
 
     const [form, setForm] = useState<FormState>(empty);
     const [editingId, setEditingId] = useState<number | null>(null);
@@ -22,7 +22,7 @@ export default function CrudProductList() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setSubmitting(true);
+        //setSubmitting(true);
         try {
             if (editingId !== null) {
                 await updateProduct(editingId, form);
@@ -32,7 +32,7 @@ export default function CrudProductList() {
             setForm(empty);
             setEditingId(null);
         } finally {
-            setSubmitting(false);
+            //setSubmitting(false);
         }
     };
 
@@ -50,6 +50,10 @@ export default function CrudProductList() {
         <div className="container">
             <h1>Products (MSW CRUD demo)</h1>
 
+            <div className="error">
+                {error}
+            </div>
+
             {/* Form */}
             <form className="crud-form" onSubmit={handleSubmit}>
                 <h2>{editingId !== null ? "Edit product" : "Add product"}</h2>
@@ -60,7 +64,7 @@ export default function CrudProductList() {
                     <input required name="description" placeholder="Description" value={form.description} onChange={handleChange} />
                 </div>
                 <div className="crud-form__actions">
-                    <button type="submit" disabled={submitting}>
+                    <button type="submit" disabled={isLoading}>
                         {editingId !== null ? "Save changes" : "Add product"}
                     </button>
                     {editingId !== null && (
@@ -70,6 +74,8 @@ export default function CrudProductList() {
             </form>
 
             {/* List */}
+            {isLoading && <p>Loading...</p>}
+
                 <table className="crud-table">
                     <thead>
                         <tr>

@@ -5,6 +5,9 @@ import { Product } from "../../types/product";
 
 export function useProducts() {
     const [products, setProducts] = useState([] as Product[])
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState("")
+
     // We want to store the products here in a state variable
     const baseUrl = ""; //'http://localhost:8080' // Your docker python backend in the future
     // READ — fetch all products
@@ -16,11 +19,13 @@ export function useProducts() {
     // another fetch, another state update, another render — an infinite loop.
     // The empty array [] means the function is only created once (on mount).
     const fetchProducts = useCallback(async () => {
+        setIsLoading(true);
         const response = await fetch(baseUrl+"/api/products", {
             method: 'GET'
         })
         //console.log(response);
         setProducts(await response.json())
+        setIsLoading(false);
         // MSW intercepts this URL and returns the in-memory store.
         // When the real backend is ready, replace "/api/products" with
         // your actual API base URL, e.g. "https://api.example.com/products"
@@ -48,6 +53,7 @@ export function useProducts() {
         // MSW handles POST and returns the new product with an auto-generated id.
         // With a real backend this fetch call stays exactly the same —
         // just make sure the server also responds with the created product (201).
+        setIsLoading(true);
         const response = await fetch(baseUrl+"/api/products", {
             method: 'POST',
             // headers: {
@@ -58,6 +64,7 @@ export function useProducts() {
         const product = await response.json()
         //console.log(product)
         setProducts(products => [...products, product])
+        setIsLoading(false)
 
     }, []);
 
@@ -70,12 +77,27 @@ export function useProducts() {
 
     // DELETE — same reasoning as createProduct above
     const deleteProduct = useCallback(async (id: number) => {
+        setError("");
         // MSW handles DELETE and returns 204 No Content.
         // The real backend should also return 204 for this to work as-is.
         // If it returns 200 with a body instead, no changes are needed here
         // since we don't read the response body.
+        console.log(id);
+        const response = await fetch(baseUrl+"/api/products/"+id, {
+            method: 'DELETE',
+        })
+        if (!response.ok) { // check for fejl.
+            const res: any = await response.json();
+            setError(res.error);
+            
+        }
+        if (response.status === 204) {
+            setProducts(products => products.filter(p => p.id !== id))
+        }
+
+
     }, []);
 
-    return { products, createProduct, updateProduct, deleteProduct };
+    return { products, createProduct, updateProduct, deleteProduct, isLoading, error };
 }
 
