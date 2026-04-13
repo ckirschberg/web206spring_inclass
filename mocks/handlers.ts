@@ -8,10 +8,28 @@ let productStore: Product[] = [
     { id: 3, name: "Giraffe",  price: 120, description: "Description 3", category: "Animal" },
     { id: 4, name: "Elephant", price: 150, description: "Description 4", category: "Animal" },
 ];
+let liked: boolean = false;
+
 
 let nextId = 5;
 
 export const handlers = [
+
+    http.post("/api/products/like", async ({ request }) => {
+        await delay(1000); // simulates 1s network latency
+        const random = Math.random();
+        console.log(random);
+        if (random < 0.2) {
+            return HttpResponse.json({error: "Something went wrong, muahhahaahh"}, { status: 500 });
+        } else {
+            const body = (await request.json()) as boolean;
+            liked = body;
+            return HttpResponse.json({like: liked}, { status: 200 });
+        }
+    }),
+
+
+
     // GET /api/products
     http.get("/api/products", async () => {
         await delay(1000); // simulates 1s network latency

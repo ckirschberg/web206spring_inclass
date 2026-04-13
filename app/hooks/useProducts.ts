@@ -7,6 +7,7 @@ export function useProducts() {
     const [products, setProducts] = useState([] as Product[])
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState("")
+    const [liked, setLiked] = useState(false);
 
     // We want to store the products here in a state variable
     const baseUrl = ""; //'http://localhost:8080' // Your docker python backend in the future
@@ -41,6 +42,25 @@ export function useProducts() {
     useEffect(() => {
         fetchProducts();
     }, [fetchProducts]);
+
+    const voteUpLike = useCallback(async (like: boolean) => {
+        setLiked(like => !like); // optimistic UI update because we dont know yet if the server-save works out.
+        
+        console.log("like is", like);
+        const response = await fetch(baseUrl+"/api/products/like", {
+            method: 'POST',
+            // headers: {
+            //     'Content-Type': 'application/json'
+            // },
+            body: JSON.stringify(!like) 
+        })
+        if (!response.ok) {
+            setLiked(like => !like);
+            alert("Something went wrong");
+            return;
+        }
+        
+    }, []);
 
     // CREATE
     //
@@ -98,6 +118,6 @@ export function useProducts() {
 
     }, []);
 
-    return { products, createProduct, updateProduct, deleteProduct, isLoading, error };
+    return { products, createProduct, updateProduct, deleteProduct, isLoading, error, voteUpLike, liked };
 }
 
