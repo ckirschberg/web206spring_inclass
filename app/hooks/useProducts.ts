@@ -148,63 +148,58 @@ export function useProducts() {
     const createProduct = (data: Omit<Product, "id">) => createMutation.mutateAsync(data);
     // ─────────────────────────────────────────────────────────────────────────
 
-    // UPDATE — same reasoning as createProduct above
-    const updateProduct = useCallback(async (id: number, data: Partial<Omit<Product, "id">>) => {
-        // MSW handles PUT and merges the fields in the in-memory store.
-        // Some REST APIs use PATCH instead of PUT for partial updates —
-        // change method: "PUT" to method: "PATCH" if your backend requires it.
-    }, []);
+     const updateProduct = (id: number, data: Omit<Product, "id">) => updateMutation.mutateAsync({id, data});
 
-    // DELETE — same reasoning as createProduct above
-    const deleteProduct = useCallback(async (id: number) => {
-        setError("");
-        // MSW handles DELETE and returns 204 No Content.
-        // The real backend should also return 204 for this to work as-is.
-        // If it returns 200 with a body instead, no changes are needed here
-        // since we don't read the response body.
-        console.log(id);
-        const response = await fetch(baseUrl+"/api/products/"+id, {
-            method: 'DELETE',
-        })
-        if (!response.ok) { // check for fejl.
-            const res: any = await response.json();
-            setError(res.error);
-            
-        }
-        if (response.status === 204) {
-            // ── WITHOUT TanStack Query ──────────────────────────────────────────
-            // Manually remove the product from local state:
-            // setProducts(products => products.filter(p => p.id !== id))
-            // ───────────────────────────────────────────────────────────────────
+     const updateMutation = useMutation({
+        mutationFn: async ({ id, data }: { id: number; data: Partial<Omit<Product, "id">> }) => {
+            // MSW handles POST and returns the new product with an auto-generated id.
+            // With a real backend this fetch call stays exactly the same —
+            // just make sure the server also responds with the created product (201).
+            const response = await fetch(baseUrl + "/api/products/"+ id, {
+                method: "PUT",
+                body: JSON.stringify(data),
+            });
+            if (!response.ok) throw new Error("Failed to update product");
+            return response.json() as Promise<Product>;
+        },
+        onSuccess: (product) => {
+            // Option 1 — setQueryData: append the new product directly to the cache.
+            // No extra network request. Works because the server returned the full item.
+            // queryClient.setQueryData<Product[]>(["products"], (old = []) => [...old, product]);
 
-            // ── WITH TanStack Query ─────────────────────────────────────────────
-            // Two ways to update the UI after a mutation:
-            //
-            // 1. setQueryData — updates the cache directly without a network request.
-            //    We already know which item was deleted (we have the id), so we can
-            //    compute the new list immediately. Instant, no extra fetch.
-            //
-            // 2. invalidateQueries — marks the cache as stale and re-fetches the
-            //    full list from the server. Costs a network round-trip but guarantees
-            //    the client reflects any other server-side changes (e.g. cascading
-            //    deletes, updated totals, etc.).
-            //
-            // Option 1 — setQueryData (active):
-            // setQueryData takes an updater function that receives the current
-            // cached array (old) and must return the new array.
-            // old = [] is a default in case the cache is empty/undefined.
-            // .filter() returns a new array with every product EXCEPT the one
-            // whose id matches the one we just deleted.
-            queryClient.setQueryData<Product[]>(["products"], (old = []) => old.filter(p => p.id !== id))
-            //
             // Option 2 — invalidateQueries (commented out):
-            // queryClient.invalidateQueries({ queryKey: ["products"] })
-            // ───────────────────────────────────────────────────────────────────
-        }
+            // Re-fetches the full list. Use this if the server may have made
+            // other changes you don't know about.
+            queryClient.invalidateQueries({ queryKey: ["products"] });
+        },
+    });
+    // UPDATE — same reasoning as createProduct above
+    // const updateProduct = useCallback(async (id: number, data: Partial<Omit<Product, "id">>) => {
+    //     // MSW handles PUT and merges the fields in the in-memory store.
+    //     // Some REST APIs use PATCH instead of PUT for partial updates —
+    //     // change method: "PUT" to method: "PATCH" if your backend requires it.
+    // }, []);
 
+    const deleteProduct = (id: number) => deleteMutation.mutateAsync(id);
+    // DELETE — same reasoning as createProduct above
 
-    }, []);
-
+    const deleteMutation = useMutation({
+        mutationFn: async (id: number) => {
+            // MSW handles DELETE and returns 204 No Content.
+            // The real backend should also return 204 for this to work as-is.
+            // If it returns 200 with a body instead, no changes are needed here
+            // since we don't read the response body.
+            console.log(id);
+            const response = await fetch(baseUrl+"/api/products/"+id, {
+                method: 'DELETE',
+            })
+            if (!response.ok) { // check for fejl.
+                const res: any = await response.json();
+            }
+            queryClient.invalidateQueries({ queryKey: ["products"] });
+        },
+    });
+        
     return { products, createProduct, updateProduct, deleteProduct, isLoading, isCreating: createMutation.isPending, error: error || fetchError?.message || "", voteUpLike, liked };
 }
 
