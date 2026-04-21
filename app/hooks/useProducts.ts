@@ -10,7 +10,13 @@ export function useProducts() {
     const [liked, setLiked] = useState(false);
 
     // We want to store the products here in a state variable
-    const baseUrl = ""; //'http://localhost:8080' // Your docker python backend in the future
+    // baseUrl is read from the NEXT_PUBLIC_BASE_URL environment variable.
+    // - Locally (.env): leave it empty → relative URLs → MSW intercepts them.
+    // - Vercel: set NEXT_PUBLIC_BASE_URL=https://your-backend.com in the
+    //   project's Environment Variables settings.
+    // The NEXT_PUBLIC_ prefix is required by Next.js to expose the value to
+    // client-side code (anything running in the browser).
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "";
 
     // ── WITHOUT TanStack Query ────────────────────────────────────────────────
     // Manual fetch pattern: we manage the products array, loading flag, and
